@@ -1,6 +1,7 @@
 package com.example.post_pc_sam;
 
 import android.content.Context;
+import android.os.PersistableBundle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -22,6 +23,16 @@ public class MainActivity extends AppCompatActivity implements TodoChangedCallBa
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) {
+            all_tasks.clear();
+            int numOfTods = savedInstanceState.getInt("num_of_todos");
+            for (int i = 0; i < numOfTods; i++) {
+                String todo_task = savedInstanceState.getString("todo_task_" + i);
+                Boolean isDone = savedInstanceState.getBoolean("todo_isDone_" + i);
+                all_tasks.add(new TodoItem(todo_task, isDone));
+            }
+        }
+
         setContentView(R.layout.activity_main);
         ImageButton addButton = (ImageButton) findViewById(R.id.add_task_button);
         TodoAdapter = new TodoListAdapter(this);
@@ -49,6 +60,15 @@ public class MainActivity extends AppCompatActivity implements TodoChangedCallBa
         });
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("num_of_todos", all_tasks.size());
+        for (int i = 0; i < all_tasks.size(); i++) {
+            outState.putString("todo_task_" + i, all_tasks.get(i).getTask());
+            outState.putBoolean("todo_isDone_" + i, all_tasks.get(i).isDone());
+        }
+    }
 
     @Override
     public void NotifyTaskChangedCallBack(int pos) {
