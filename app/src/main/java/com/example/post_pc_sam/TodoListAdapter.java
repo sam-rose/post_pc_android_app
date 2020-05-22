@@ -10,9 +10,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-interface TodoChangedCallBack {
-    void NotifyTaskChangedCallBack(int index);
-    void NotifyTaskDeleteCallBack(int index);
+interface TodoItemClickedCallBack {
+    void NotifyTodoItemClickedCallBack(int index);
 }
 
 class TodoItemViewHolder extends RecyclerView.ViewHolder{
@@ -26,10 +25,10 @@ class TodoItemViewHolder extends RecyclerView.ViewHolder{
 
 public class TodoListAdapter extends RecyclerView.Adapter<TodoItemViewHolder> {
     private ArrayList<TodoItem> all_tasks = new ArrayList<>();
-    TodoChangedCallBack  toCallOnTodoChanged = null;
+    TodoItemClickedCallBack toCallOnTodoChanged = null;
 
 
-    public TodoListAdapter(TodoChangedCallBack  toCallOnTodoChanged) {
+    public TodoListAdapter(TodoItemClickedCallBack toCallOnTodoChanged) {
         this.toCallOnTodoChanged = toCallOnTodoChanged;
     }
 
@@ -46,21 +45,11 @@ public class TodoListAdapter extends RecyclerView.Adapter<TodoItemViewHolder> {
             @Override
             public void onClick(View v) {
                 if (toCallOnTodoChanged != null) {
-                    toCallOnTodoChanged.NotifyTaskChangedCallBack(all_tasks.get(holder.getAdapterPosition()).getId());
+                    toCallOnTodoChanged.NotifyTodoItemClickedCallBack(all_tasks.get(holder.getAdapterPosition()).getId());
                 }
             }
         });
 
-        view.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                if (toCallOnTodoChanged != null) {
-                    toCallOnTodoChanged.NotifyTaskDeleteCallBack(all_tasks.get(holder.getAdapterPosition()).getId());
-                    return true;
-                }
-                return false;
-            }
-        });
         return holder;
     }
 

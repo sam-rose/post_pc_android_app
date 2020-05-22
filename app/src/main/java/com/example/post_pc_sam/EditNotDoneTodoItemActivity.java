@@ -25,7 +25,7 @@ public class EditNotDoneTodoItemActivity extends AppCompatActivity {
         }
       final ToDoListManager listManager = ((TodoApp) getApplicationContext()).listManager;
 
-        EditText taskToEdit = (EditText)findViewById(R.id.change_task_text);
+        EditText taskToEdit = (EditText)findViewById(R.id.task_text);
         taskToEdit.setText(listManager.getItemText(todo_item_id));
 
         TextView creationTimeStamp = (TextView)findViewById(R.id.create_time_stamp);
@@ -38,7 +38,7 @@ public class EditNotDoneTodoItemActivity extends AppCompatActivity {
         DoneButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                listManager.setItemDone(todo_item_id);
+                listManager.setItemDone(todo_item_id, TodoItem.TASK_DONE);
                 Intent intent = new Intent(EditNotDoneTodoItemActivity.this, MainActivity.class);
                 startActivity(intent);
             }
@@ -48,7 +48,7 @@ public class EditNotDoneTodoItemActivity extends AppCompatActivity {
         ApplyTextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                EditText taskToEdit = (EditText)findViewById(R.id.change_task_text);
+                EditText taskToEdit = (EditText)findViewById(R.id.task_text);
                 listManager.setItemText(todo_item_id, taskToEdit.getText().toString());
                 ToastMessage("The item was updated successfully!");
             }

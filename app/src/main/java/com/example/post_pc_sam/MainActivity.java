@@ -1,10 +1,7 @@
 package com.example.post_pc_sam;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.PersistableBundle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -12,15 +9,9 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-
-public class MainActivity extends AppCompatActivity implements TodoChangedCallBack {
-    final Boolean TASK_NOT_DONE = false;
-    final Boolean TASK_DONE = true;
+public class MainActivity extends AppCompatActivity implements TodoItemClickedCallBack {
     TodoListAdapter TodoAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements TodoChangedCallBa
                     return;
                 }
                 ToDoListManager listManager = ((TodoApp) getApplicationContext()).listManager;
-                listManager.addItem(new TodoItem(task_to_add, TASK_NOT_DONE));
+                listManager.addItem(new TodoItem(task_to_add, TodoItem.TASK_NOT_DONE));
                 TodoAdapter.setTodos(listManager.getAll_tasks());
             }
         });
@@ -62,20 +53,18 @@ public class MainActivity extends AppCompatActivity implements TodoChangedCallBa
     }
 
     @Override
-    public void NotifyTaskChangedCallBack(int id) {
+    public void NotifyTodoItemClickedCallBack(int id) {
         ToDoListManager listManager = ((TodoApp) getApplicationContext()).listManager;
         if (listManager.isItemDone(id)) {
-            return;
+            Intent intent = new Intent(this, EditDoneTodoItemActivity.class);
+            intent.putExtra("item_id", id);
+            startActivity(intent);
         }
         else {
             Intent intent = new Intent(this, EditNotDoneTodoItemActivity.class);
             intent.putExtra("item_id", id);
             startActivity(intent);
         }
-        // TODO; find place for this logic
-//        listManager.setItemDone(index);
-//        TodoAdapter.setTodos(listManager.getAll_tasks());
-//        ToastMessage("TODO " + listManager.getItemText(index) + " is now DONE. BOOM!");
     }
 
     public void ToastMessage(CharSequence  message) {
@@ -83,26 +72,6 @@ public class MainActivity extends AppCompatActivity implements TodoChangedCallBa
         int duration = Toast.LENGTH_SHORT;
         Toast toast = Toast.makeText(context, message, duration);
         toast.show();
-    }
-
-    @Override
-    public void NotifyTaskDeleteCallBack(final int id) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Are You Sure to delete?");
-
-        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                ToDoListManager listManager = ((TodoApp)getApplicationContext()).listManager;
-                listManager.deleteItem(id);
-                TodoAdapter.setTodos(listManager.getAll_tasks());
-            }
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                return;
-            }
-        });
-        builder.show();
     }
 
     @Override

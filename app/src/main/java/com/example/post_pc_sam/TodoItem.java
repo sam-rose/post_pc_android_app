@@ -9,6 +9,8 @@ public class TodoItem {
     private boolean isDone = false;
     private Timestamp creationTimestamp;
     private Timestamp editTimestamp;
+    static final Boolean TASK_NOT_DONE = false;
+    static final Boolean TASK_DONE = true;
 
     public TodoItem(String task, boolean isDone) {
         this.task = task;
@@ -48,7 +50,7 @@ public class TodoItem {
         this.editTimestamp.setTime(editedTime);
     }
 
-    public void setDone(boolean done) {
+    public void setIsDone(boolean done) {
         isDone = done;
         setEditTimestamp(System.currentTimeMillis());
     }

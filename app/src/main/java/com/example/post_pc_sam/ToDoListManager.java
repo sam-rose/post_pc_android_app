@@ -76,13 +76,13 @@ public class ToDoListManager {
         return all_tasks.get(index).isDone();
     }
 
-    public void setItemDone(int id) {
+    public void setItemDone(int id, boolean isDone) {
         int index = getItemIndexById(id);
         if (index == -1) {
             postIdLogError(id, "setItemDone");
             return;
         }
-        all_tasks.get(index).setDone(true);
+        all_tasks.get(index).setIsDone(isDone);
         saveUpdatedItem(index);
     }
 
