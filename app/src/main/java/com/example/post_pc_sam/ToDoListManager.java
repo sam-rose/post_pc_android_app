@@ -27,6 +27,8 @@ public class ToDoListManager {
                 all_tasks.add(todo);
             }
         }
+        TodoItem.currentId = sp.getInt("current_todo_class_id", 0);;
+
         Log.d("ToDoListManager", "current list size: " + TodoListSize);
     }
 
@@ -40,10 +42,16 @@ public class ToDoListManager {
         SharedPreferences.Editor editor = sp.edit();
         editor.putInt("TodoListSize", newSize);
         editor.putString("todo_task_" + (newSize - 1), gson.toJson(toAdd));
+        editor.putInt("current_todo_class_id", TodoItem.currentId);
         editor.apply();
     }
 
-    public void deleteItem(int index) {
+    public void deleteItem(int id) {
+        int index = getItemIndexById(id);
+        if (index == -1) {
+            postIdLogError(id, "deleteItem");
+            return;
+        }
         all_tasks.remove(index);
         int newSize = all_tasks.size();
         int TodoListSize = sp.getInt("TodoListSize", 0);
@@ -59,19 +67,84 @@ public class ToDoListManager {
 
     }
 
-    public boolean isItemDone(int index) {
+    public boolean isItemDone(int id) {
+        int index = getItemIndexById(id);
+        if (index == -1) {
+            postIdLogError(id, "isItemDone");
+            return false;
+        }
         return all_tasks.get(index).isDone();
     }
 
-    public void setItemDone(int index) {
+    public void setItemDone(int id) {
+        int index = getItemIndexById(id);
+        if (index == -1) {
+            postIdLogError(id, "setItemDone");
+            return;
+        }
         all_tasks.get(index).setDone(true);
+        saveUpdatedItem(index);
+    }
+
+    public boolean setItemText(int id, String newTaskText) {
+        int index = getItemIndexById(id);
+        if (index == -1) {
+            postIdLogError(id, "setItemText");
+            return false;
+        }
+        all_tasks.get(index).setTask(newTaskText);
+        saveUpdatedItem(index);
+        return true;
+    }
+
+    void postIdLogError(int id, String functionName) {
+        Log.e("ToDoListManager", "item id not found " + id + "  in " + functionName);
+    }
+
+    public String getItemText(int id) {
+        int index = getItemIndexById(id);
+        if (index == -1) {
+            postIdLogError(id, "getItemText");
+            return "";
+        }
+        return all_tasks.get(index).getTask();
+
+    }
+
+    public int getItemId(int index) {
+        return all_tasks.get(index).getId();
+    }
+
+    public String getItemCreationTimeStamp(int id) {
+        int index = getItemIndexById(id);
+        if (index == -1) {
+            postIdLogError(id, "getItemCreationTimeStamp");
+            return "";
+        }
+        return all_tasks.get(index).getCreationTimestamp();
+    }
+
+    public String getItemEditedTimeStamp(int id) {
+        int index = getItemIndexById(id);
+        if (index == -1) {
+            postIdLogError(id, "getItemEditedTimeStamp");
+            return "";
+        }
+        return all_tasks.get(index).getEditTimestamp();
+    }
+
+    private int getItemIndexById(int id) {
+        for (int i = 0; i < all_tasks.size(); i++) {
+            if (all_tasks.get(i).getId() == id) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    void saveUpdatedItem(int index) {
         SharedPreferences.Editor editor = sp.edit();
         editor.putString("todo_task_" + index, gson.toJson(all_tasks.get(index)));
         editor.apply();
-    }
-
-    public String getItemText(int index) {
-        return all_tasks.get(index).getTask();
-
     }
 }

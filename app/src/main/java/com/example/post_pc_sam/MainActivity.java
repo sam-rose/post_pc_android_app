@@ -3,6 +3,7 @@ package com.example.post_pc_sam;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.PersistableBundle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -61,16 +62,20 @@ public class MainActivity extends AppCompatActivity implements TodoChangedCallBa
     }
 
     @Override
-    public void NotifyTaskChangedCallBack(int index) {
+    public void NotifyTaskChangedCallBack(int id) {
         ToDoListManager listManager = ((TodoApp) getApplicationContext()).listManager;
-        if (listManager.isItemDone(index)) {
+        if (listManager.isItemDone(id)) {
             return;
         }
-        listManager.setItemDone(index);
-        TodoAdapter.setTodos(listManager.getAll_tasks());
-        ToastMessage("TODO " + listManager.getItemText(index) + " is now DONE. BOOM!");
-
-
+        else {
+            Intent intent = new Intent(this, EditNotDoneTodoItemActivity.class);
+            intent.putExtra("item_id", id);
+            startActivity(intent);
+        }
+        // TODO; find place for this logic
+//        listManager.setItemDone(index);
+//        TodoAdapter.setTodos(listManager.getAll_tasks());
+//        ToastMessage("TODO " + listManager.getItemText(index) + " is now DONE. BOOM!");
     }
 
     public void ToastMessage(CharSequence  message) {
@@ -81,15 +86,14 @@ public class MainActivity extends AppCompatActivity implements TodoChangedCallBa
     }
 
     @Override
-    public void NotifyTaskDeleteCallBack(int index) {
-        final int pos = index;
+    public void NotifyTaskDeleteCallBack(final int id) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Are You Sure to delete?");
 
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 ToDoListManager listManager = ((TodoApp)getApplicationContext()).listManager;
-                listManager.deleteItem(pos);
+                listManager.deleteItem(id);
                 TodoAdapter.setTodos(listManager.getAll_tasks());
             }
         });
@@ -99,5 +103,12 @@ public class MainActivity extends AppCompatActivity implements TodoChangedCallBa
             }
         });
         builder.show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        ToDoListManager listManager = ((TodoApp) getApplicationContext()).listManager;
+        TodoAdapter.setTodos(listManager.getAll_tasks());
     }
 }

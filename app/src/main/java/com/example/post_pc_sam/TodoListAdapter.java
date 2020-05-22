@@ -46,7 +46,7 @@ public class TodoListAdapter extends RecyclerView.Adapter<TodoItemViewHolder> {
             @Override
             public void onClick(View v) {
                 if (toCallOnTodoChanged != null) {
-                    toCallOnTodoChanged.NotifyTaskChangedCallBack(holder.getAdapterPosition());
+                    toCallOnTodoChanged.NotifyTaskChangedCallBack(all_tasks.get(holder.getAdapterPosition()).getId());
                 }
             }
         });
@@ -55,7 +55,7 @@ public class TodoListAdapter extends RecyclerView.Adapter<TodoItemViewHolder> {
             @Override
             public boolean onLongClick(View v) {
                 if (toCallOnTodoChanged != null) {
-                    toCallOnTodoChanged.NotifyTaskDeleteCallBack(holder.getAdapterPosition());
+                    toCallOnTodoChanged.NotifyTaskDeleteCallBack(all_tasks.get(holder.getAdapterPosition()).getId());
                     return true;
                 }
                 return false;
