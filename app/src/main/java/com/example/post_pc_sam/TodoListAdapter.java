@@ -1,8 +1,9 @@
 package com.example.post_pc_sam;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.RecyclerView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,7 +58,7 @@ public class TodoListAdapter extends RecyclerView.Adapter<TodoItemViewHolder> {
     public void onBindViewHolder(@NonNull TodoItemViewHolder todoItemViewHolder, int i) {
         TodoItem todo = all_tasks.get(i);
         todoItemViewHolder.Todo.setText(todo.getTask());
-        todoItemViewHolder.Todo.setAlpha(todo.isDone()? 0.3f : 1);
+        todoItemViewHolder.Todo.setAlpha(todo.getIsDone()? 0.3f : 1);
     }
 
     @Override

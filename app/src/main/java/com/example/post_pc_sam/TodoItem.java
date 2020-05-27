@@ -1,57 +1,57 @@
 package com.example.post_pc_sam;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
-public class TodoItem {
+public class TodoItem implements Serializable {
     static int currentId = 0;
-    private int id;
-    private String task = "";
-    private boolean isDone = false;
-    private Timestamp creationTimestamp;
-    private Timestamp editTimestamp;
-    static final Boolean TASK_NOT_DONE = false;
-    static final Boolean TASK_DONE = true;
+    public int id;
+    public String task = "";
+    public boolean isDone = false;
+    public long creationTimestamp;
+    public long editTimestamp;
+    static public final Boolean TASK_NOT_DONE = false;
+    static public final Boolean TASK_DONE = true;
 
     public TodoItem(String task, boolean isDone) {
         this.task = task;
         this.isDone = isDone;
         this.id = TodoItem.currentId++;
         long milliTime = System.currentTimeMillis();
-        creationTimestamp = new Timestamp(milliTime );
-        editTimestamp = new Timestamp(milliTime);
+        creationTimestamp = milliTime;
+        editTimestamp = milliTime;
     }
+    public TodoItem(){}
 
     public String getTask() {
         return task;
     }
 
-    public boolean isDone() {
+    public boolean getIsDone() {
         return isDone;
     }
 
-    public String getCreationTimestamp() {
-        return creationTimestamp.toString();
+    public String showStringFormatCreateTimeStamp() {
+        Timestamp timestamp = new Timestamp(creationTimestamp);
+        return timestamp.toString();
     }
 
-    public void setTask(String task) {
+    public String showStringFormatEditTimeStamp() {
+        Timestamp timestamp = new Timestamp(editTimestamp);
+        return timestamp.toString();
+    }
+
+    public void updateTaskString(String task) {
         this.task = task;
-        setEditTimestamp(System.currentTimeMillis());
-    }
-
-    public String getEditTimestamp() {
-        return editTimestamp.toString();
+        editTimestamp = System.currentTimeMillis();
     }
 
     public int getId() {
         return id;
     }
 
-    private void setEditTimestamp(long editedTime) {
-        this.editTimestamp.setTime(editedTime);
-    }
-
-    public void setIsDone(boolean done) {
+    public void updateIsDone(boolean done) {
         isDone = done;
-        setEditTimestamp(System.currentTimeMillis());
+        editTimestamp = System.currentTimeMillis();
     }
 }

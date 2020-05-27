@@ -1,70 +1,135 @@
 package com.example.post_pc_sam;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.util.Log;
 
-import com.google.gson.Gson;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 
-import static android.content.Context.MODE_PRIVATE;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+interface ToDoListChangedCallBack {
+    public void ToDoListChanged();
+}
 
 public class ToDoListManager {
     ArrayList<TodoItem> all_tasks;
-    SharedPreferences sp;
-    Gson gson;
-
-    public ToDoListManager(Context context) {
+    ToDoListChangedCallBack toUpdateOnListChanged;
+    public ToDoListManager(ToDoListChangedCallBack toUpdateOnListChanged) {
+        this.toUpdateOnListChanged = toUpdateOnListChanged;
         all_tasks = new ArrayList<>();
-        sp = context.getSharedPreferences("todoListFile", MODE_PRIVATE);
-        gson = new Gson();
-        int TodoListSize = sp.getInt("TodoListSize", 0);
-        for (int i = 0; i < TodoListSize; i++) {
-            String todo_task = sp.getString("todo_task_" + i, null);
-            if (todo_task != null) {
-                TodoItem todo = gson.fromJson(todo_task, TodoItem.class);
-                all_tasks.add(todo);
-            }
-        }
-        TodoItem.currentId = sp.getInt("current_todo_class_id", 0);;
+        loadTodoList("TodoList");
+        addCollectionListener("TodoList");
+    }
 
-        Log.d("ToDoListManager", "current list size: " + TodoListSize);
+    private void loadTodoList(String collectionName) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection(collectionName).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful() && task.getResult() != null) {
+                    all_tasks.clear();
+                    int maxIdSeen = 0;
+                    for (QueryDocumentSnapshot doc:  task.getResult()) {
+                        TodoItem todoItem = doc.toObject(TodoItem.class);
+                        if (maxIdSeen < todoItem.getId()) {
+                            maxIdSeen = todoItem.getId();
+                        }
+                        all_tasks.add(todoItem);
+                    }
+                    TodoItem.currentId = maxIdSeen + 1;
+                    toUpdateOnListChanged.ToDoListChanged();
+                }
+                else {
+                    Log.d("ToDoListManager", "Error getting documents: " + task.getException());
+                }
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.d("ToDoListManager", "Error getting TodoList collection: " + e.getMessage());
+            }
+        });
+    }
+
+    private void addCollectionListener(String collectionName) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection(collectionName).addSnapshotListener(new EventListener<QuerySnapshot>() {
+            @Override
+            public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException e) {
+                if (e != null || queryDocumentSnapshots == null) {
+                    Log.e("ToDoListManager", "Error getting TodoList collection from Listener");
+                    return;
+                }
+                all_tasks.clear();
+                int maxIdSeen = 0;
+                for (QueryDocumentSnapshot doc:  queryDocumentSnapshots) {
+                    TodoItem todoItem = doc.toObject(TodoItem.class);
+                    if (maxIdSeen < todoItem.getId()) {
+                        maxIdSeen = todoItem.getId();
+                    }
+                    all_tasks.add(todoItem);
+                }
+                TodoItem.currentId = maxIdSeen + 1;
+                toUpdateOnListChanged.ToDoListChanged();
+            }
+        });
     }
 
     public ArrayList<TodoItem> getAll_tasks() {
         return all_tasks;
     }
 
-    public void addItem(TodoItem toAdd) {
-        all_tasks.add(toAdd);
-        int newSize = all_tasks.size();
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putInt("TodoListSize", newSize);
-        editor.putString("todo_task_" + (newSize - 1), gson.toJson(toAdd));
-        editor.putInt("current_todo_class_id", TodoItem.currentId);
-        editor.apply();
+    public void updateItem(final TodoItem toAdd, String collectionName) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection(collectionName).document("" + toAdd.getId()).set(toAdd).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.d("ToDoListManager", "successfully added item to data base, id: " + toAdd.getId());
+                toUpdateOnListChanged.ToDoListChanged();
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.e("ToDoListManager", "Error adding item to data base, id: " + toAdd.getId() + ": " + e.getMessage());
+            }
+        });
     }
 
-    public void deleteItem(int id) {
+    public void addItem(TodoItem toAdd) {
+        all_tasks.add(toAdd);
+        updateItem(toAdd, "TodoList");
+    }
+
+    public void deleteItem(final int id) {
         int index = getItemIndexById(id);
         if (index == -1) {
             postIdLogError(id, "deleteItem");
             return;
         }
         all_tasks.remove(index);
-        int newSize = all_tasks.size();
-        int TodoListSize = sp.getInt("TodoListSize", 0);
-        SharedPreferences.Editor editor = sp.edit();
-        for (int i = 0; i < TodoListSize; i++) {
-            editor.remove("todo_task_" + i);
-            if (i != TodoListSize - 1) {
-                editor.putString("todo_task_" + i, gson.toJson(all_tasks.get(i)));
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("TodoList").document("" + id).delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.d("ToDoListManager", "successfully deleted item to data base, id: " + id);
+                toUpdateOnListChanged.ToDoListChanged();
             }
-        }
-        editor.putInt("TodoListSize", newSize);
-        editor.apply();
-
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.e("ToDoListManager", "Error deleting item to data base, id: " + id + ": " + e.getMessage());
+            }
+        });
     }
 
     public boolean isItemDone(int id) {
@@ -73,17 +138,18 @@ public class ToDoListManager {
             postIdLogError(id, "isItemDone");
             return false;
         }
-        return all_tasks.get(index).isDone();
+        return all_tasks.get(index).getIsDone();
     }
 
-    public void setItemDone(int id, boolean isDone) {
+    public boolean setItemDone(int id, boolean isDone) {
         int index = getItemIndexById(id);
         if (index == -1) {
             postIdLogError(id, "setItemDone");
-            return;
+            return false;
         }
-        all_tasks.get(index).setIsDone(isDone);
-        saveUpdatedItem(index);
+        all_tasks.get(index).updateIsDone(isDone);
+        updateItem(all_tasks.get(index), "TodoList");
+        return true;
     }
 
     public boolean setItemText(int id, String newTaskText) {
@@ -92,8 +158,8 @@ public class ToDoListManager {
             postIdLogError(id, "setItemText");
             return false;
         }
-        all_tasks.get(index).setTask(newTaskText);
-        saveUpdatedItem(index);
+        all_tasks.get(index).updateTaskString(newTaskText);
+        updateItem(all_tasks.get(index), "TodoList");
         return true;
     }
 
@@ -121,7 +187,7 @@ public class ToDoListManager {
             postIdLogError(id, "getItemCreationTimeStamp");
             return "";
         }
-        return all_tasks.get(index).getCreationTimestamp();
+        return all_tasks.get(index).showStringFormatCreateTimeStamp();
     }
 
     public String getItemEditedTimeStamp(int id) {
@@ -130,7 +196,7 @@ public class ToDoListManager {
             postIdLogError(id, "getItemEditedTimeStamp");
             return "";
         }
-        return all_tasks.get(index).getEditTimestamp();
+        return all_tasks.get(index).showStringFormatEditTimeStamp();
     }
 
     private int getItemIndexById(int id) {
@@ -140,11 +206,5 @@ public class ToDoListManager {
             }
         }
         return -1;
-    }
-
-    void saveUpdatedItem(int index) {
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putString("todo_task_" + index, gson.toJson(all_tasks.get(index)));
-        editor.apply();
     }
 }

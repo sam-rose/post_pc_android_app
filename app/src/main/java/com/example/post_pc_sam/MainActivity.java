@@ -2,20 +2,25 @@ package com.example.post_pc_sam;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity implements TodoItemClickedCallBack {
+public class MainActivity extends AppCompatActivity implements TodoItemClickedCallBack, ToDoListChangedCallBack {
     TodoListAdapter TodoAdapter;
+    final String CallBackRegisterName = "mainActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        TodoApp app = (TodoApp) getApplicationContext();
+        app.registerToDoListChangedCallBack(this, CallBackRegisterName);
         ToDoListManager listManager = ((TodoApp) getApplicationContext()).listManager;
         setContentView(R.layout.activity_main);
         if (savedInstanceState != null) {
@@ -24,7 +29,6 @@ public class MainActivity extends AppCompatActivity implements TodoItemClickedCa
         }
         ImageButton addButton = (ImageButton) findViewById(R.id.add_task_button);
         TodoAdapter = new TodoListAdapter(this);
-        TodoAdapter.setTodos(listManager.getAll_tasks());
         RecyclerView TodoRecycler = (RecyclerView) findViewById(R.id.recyclerView);
         TodoRecycler.setAdapter(TodoAdapter);
         TodoRecycler.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
@@ -41,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements TodoItemClickedCa
                 }
                 ToDoListManager listManager = ((TodoApp) getApplicationContext()).listManager;
                 listManager.addItem(new TodoItem(task_to_add, TodoItem.TASK_NOT_DONE));
-                TodoAdapter.setTodos(listManager.getAll_tasks());
+                //(listManager.getAll_tasks());
             }
         });
     }
@@ -77,7 +81,19 @@ public class MainActivity extends AppCompatActivity implements TodoItemClickedCa
     @Override
     protected void onResume() {
         super.onResume();
+        ToDoListChanged();
+    }
+
+    @Override
+    public void ToDoListChanged() {
         ToDoListManager listManager = ((TodoApp) getApplicationContext()).listManager;
         TodoAdapter.setTodos(listManager.getAll_tasks());
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        TodoApp app = (TodoApp) getApplicationContext();
+        app.unRegisterToDoListChangedCallBack(CallBackRegisterName);
     }
 }
